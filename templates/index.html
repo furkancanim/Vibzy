@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>vibzy</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+  <div class="wrap">
+    <!-- ustbar -->
+    <header class="top">
+      <div class="brand">
+        <div class="mark"></div>
+        <div class="name">vibzy</div>
+      </div>
+    </header>
+
+    <!-- flashmessages  -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="alerts">
+          {% for category, msg in messages %}
+            <div class="alert {{ category }}">{{ msg }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- upload alani -->
+    <section class="card">
+      <form class="form" action="{{ url_for('web.upload') }}" method="post" enctype="multipart/form-data">
+        <label class="picker">
+          <input class="file" type="file" name="file" accept="image/*" required>
+          <span>görsel seç</span>
+        </label>
+        <button class="btn" type="submit">yükle</button>
+      </form>
+    </section>
+
+    <!-- son yukleneni alacak!!!!!!!! -->
+    {% if uploaded %}
+      <section class="card">
+        <div class="row">
+          <div class="title">son görsel</div>
+          <button class="btn" type="button" onclick="runPredict(this)">tahmin et</button>
+        </div>
+
+        <a class="preview" href="{{ url_for('web.uploaded_file', filename=uploaded) }}" target="_blank" rel="noreferrer">
+          <img src="{{ url_for('web.uploaded_file', filename=uploaded) }}" alt="son görsel">
+        </a>
+
+        <!--predict-->
+        <div class="pred" id="pred"></div>
+      </section>
+    {% endif %}
+  </div>
+
+  <script>
+    
+    const predictUrl = "{{ url_for('ml.predict') }}";
+
+   
+    async function runPredict(btn) {
+      const el = document.getElementById("pred");
+      if (!el) return;
+
+      btn.disabled = true;
+      const old = btn.textContent;
+      btn.textContent = "bekle...";
+
+      el.innerHTML = "";
+
+      try {
+        const res = await fetch(predictUrl, {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({ topk: 5 })
+        });
+
+        const data = await res.json();
+        if (!data.ok) {
+          el.textContent = "hata: " + (data.error || "bilinmeyen");
+          return;
+        }
+
+        el.innerHTML = data.topk
+          .map(x => `<span class="chip"><em>${x.class}</em><b>${(x.conf*100).toFixed(1)}%</b></span>`)
+          .join("");
+      } catch (e) {
+        console.error(e);
+        el.textContent = "istek hatası";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = old;
+      }
+    }
+  </script>
+</body>
+</html>

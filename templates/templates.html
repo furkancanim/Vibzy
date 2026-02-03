@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <title>Photo Upload Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>Fotoğraf Yükleme Dashboard</h1>
+    <p>Şimdilik sadece yükle & önizle. Model/müzik daha sonra eklenecek.</p>
+
+    <form class="card" action="/upload" method="post" enctype="multipart/form-data">
+      <input type="file" name="image" accept=".jpg,.jpeg,.png,.webp" required />
+      <button type="submit">Yükle</button>
+    </form>
+
+    {% if error %}
+      <div class="card error">{{ error }}</div>
+    {% endif %}
+
+    {% if last_uploaded %}
+      <div class="card">
+        <h2>Son Yüklenen</h2>
+        <img class="preview" src="{{ url_for('web.uploaded_file', filename=last_uploaded) }}" alt="preview">
+        <p><b>{{ last_uploaded }}</b></p>
+      </div>
+    {% endif %}
+
+    <div class="card">
+      <h2>Yüklenenler</h2>
+      {% if files|length == 0 %}
+        <p>Henüz dosya yok.</p>
+      {% else %}
+        <div class="grid">
+          {% for f in files %}
+            <a class="thumb" href="{{ url_for('web.uploaded_file', filename=f) }}" target="_blank">
+              <img src="{{ url_for('web.uploaded_file', filename=f) }}" alt="{{ f }}">
+              <span>{{ f }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>
