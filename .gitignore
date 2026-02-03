@@ -12,7 +12,4 @@ uploads/*
 .DS_Store
 .env
 
-#model
-!uploads/.gitkeep
-weights/*
-best.pt
+
