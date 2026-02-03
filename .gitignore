@@ -13,5 +13,6 @@ uploads/*
 .env
 
 #model
+!uploads/.gitkeep
 weights/*
 best.pt
