@@ -1,37 +1,61 @@
-# not: sadece session'daki son dosya için predict
-from __future__ import annotations
-
+#
+from flask import Blueprint, request, jsonify, current_app, session
 from pathlib import Path
-from flask import Blueprint, current_app, request, jsonify, session
 
-bp = Blueprint("ml", __name__)
+bp = Blueprint("ml", __name__, url_prefix="/ml")
 
-
-def _img_path() -> Path | None:
-    # not: session'da dosya yoksa predict yok
-    last = session.get("last_uploaded")
-    if not last:
-        return None
-    upload_dir = Path(current_app.config["UPLOAD_DIR"])
-    p = upload_dir / last
-    return p if p.exists() else None
-
+# VIBE KÜTÜPHANESİ: Sınıf ikililerini alfabetik sırayla eşler
+VIBE_MAP = {
+    ("buildings", "street"): "Urban_Jungle",
+    ("forest", "mountain"): "Alpine_Escape",
+    ("sea", "street"): "Coastal_Drive",
+    ("glacier", "sea"): "Arctic_Solitude",
+    ("buildings", "forest"): "City_Oasis",
+    ("glacier", "mountain"): "Wilderness_Peak"
+}
 
 @bp.post("/predict")
 def predict():
-    # not: topk opsiyonel (default 5)
     data = request.get_json(silent=True) or {}
-    topk = int(data.get("topk", 5))
+    
+    # - Parametreler
+    threshold = float(data.get("threshold", 0.15))
+    temp = float(data.get("temp", 2.0))
 
-    img_path = _img_path()
-    if img_path is None:
-        return jsonify({"ok": False, "error": "önce görsel yükle"}), 400
+    # --- KRİTİK DÜZELTME: web/routes.py'daki anahtarı kullanıyoruz ---
+    filename = session.get("last_uploaded") #
+    
+    if not filename:
+        return jsonify({
+            "ok": False, 
+            "error": "Oturumda dosya bulunamadı. Lütfen önce görsel yükleyin."
+        }), 400
 
-    # not: app'e bağlanan model servisini kullan
+    # app.py'daki konfigürasyon anahtarı 'UPLOAD_DIR'
+    upload_dir = current_app.config.get("UPLOAD_DIR")
+    img_path = Path(upload_dir) / filename
+
+    if not img_path.exists():
+        return jsonify({"ok": False, "error": f"Fiziksel dosya kayıp: {filename}"}), 404
+
+    # Tahmin işlemi
     svc = current_app.classifier
-    preds = svc.predict(img_path, topk=topk)
+    preds = svc.predict(img_path, topk=6, temperature=temp)
+
+    # Vibe Karışım Analizi
+    active_vibes = [p for p in preds if p.conf >= threshold]
+    if not active_vibes:
+        active_vibes = [preds[0]]
+
+    # İkili kombinasyonları kontrol et (alfabetik sıralama ile)
+    active_classes = sorted([p.cls for p in active_vibes[:2]])
+    vibe_tuple = tuple(active_classes)
+    
+    mood_name = VIBE_MAP.get(vibe_tuple, active_vibes[0].cls.capitalize())
 
     return jsonify({
         "ok": True,
-        "topk": [{"class": p.cls, "conf": p.conf} for p in preds],
+        "mood": mood_name,
+        "filename": filename,
+        "vibe_mix": [{"class": p.cls, "conf": round(p.conf, 2)} for p in active_vibes]
     })

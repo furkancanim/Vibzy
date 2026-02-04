@@ -36,7 +36,9 @@ class YOLOv8Classifier:
             self._load()
         return self._model
 
-    def predict(self, image_path: Path, topk: int = 5) -> List[ClassPred]:
+    
+    def predict(self, image_path: Path, topk: int = 5, temperature: float = 2.0) -> List[ClassPred]:
+        # Senin orijinal model çağırma kısmın
         results = self.model(str(image_path), imgsz=self.imgsz, device=self.device, verbose=False)
         r0 = results[0]
 
@@ -44,11 +46,22 @@ class YOLOv8Classifier:
         if probs is None:
             raise RuntimeError("classification çıktısı yok (probs)")
 
+        # Ham olasılıkları alıyoruz
         vec = probs.data.detach().float().cpu().numpy()
-        idx = np.argsort(vec)[::-1][:topk]
+
+        # --- YENİ: TEMPERATURE SCALING ---
+        # Modelin %99'luk kesinliğini yumuşatmak için logaritmik ölçekleme yapıyoruz.
+        # temperature > 1.0 ise farklar azalır (vibe karışımı artar).
+        log_probs = np.log(vec + 1e-10) / temperature
+        exp_probs = np.exp(log_probs)
+        smoothed_vec = exp_probs / np.sum(exp_probs)
+
+        # Artık sıralamayı ve sonuçları smoothed_vec üzerinden yapıyoruz
+        idx = np.argsort(smoothed_vec)[::-1][:topk]
 
         names = getattr(self.model, "names", None) or getattr(r0, "names", None)
         if names is None:
             names = {i: str(i) for i in range(len(vec))}
 
-        return [ClassPred(cls=str(names[int(i)]), conf=float(vec[int(i)])) for i in idx]
+        # Sonuçları yine senin ClassPred yapınla döndürüyoruz
+        return [ClassPred(cls=str(names[int(i)]), conf=float(smoothed_vec[int(i)])) for i in idx]

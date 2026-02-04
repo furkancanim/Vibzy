@@ -3,13 +3,31 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>vibzy</title>
+  <title>Vibzy</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    /* Sadeleştirilmiş Vibe Tasarımı */
+    .vibe-results {
+      margin-top: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .mood-small {
+      display: block;
+      width: 100%;
+      text-align: center;
+      font-size: 0.85em;
+      color: #666;
+      margin-bottom: 10px;
+      font-style: italic;
+    }
+  </style>
 </head>
 
 <body>
   <div class="wrap">
-    <!-- ustbar -->
     <header class="top">
       <div class="brand">
         <div class="mark"></div>
@@ -17,7 +35,6 @@
       </div>
     </header>
 
-    <!-- flashmessages  -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="alerts">
@@ -28,72 +45,75 @@
       {% endif %}
     {% endwith %}
 
-    <!-- upload alani -->
     <section class="card">
       <form class="form" action="{{ url_for('web.upload') }}" method="post" enctype="multipart/form-data">
         <label class="picker">
           <input class="file" type="file" name="file" accept="image/*" required>
-          <span>görsel seç</span>
+          <span>Görsel Seç</span>
         </label>
-        <button class="btn" type="submit">yükle</button>
+        <button class="btn" type="submit">Yükle</button>
       </form>
     </section>
 
-    <!-- son yukleneni alacak!!!!!!!! -->
     {% if uploaded %}
       <section class="card">
         <div class="row">
-          <div class="title">son görsel</div>
-          <button class="btn" type="button" onclick="runPredict(this)">tahmin et</button>
+          <div class="title">Analiz</div>
+          <button class="btn" type="button" onclick="runPredict(this)">Tahmin Et</button>
         </div>
 
-        <a class="preview" href="{{ url_for('web.uploaded_file', filename=uploaded) }}" target="_blank" rel="noreferrer">
-          <img src="{{ url_for('web.uploaded_file', filename=uploaded) }}" alt="son görsel">
-        </a>
+        <div class="preview">
+          <img src="{{ url_for('web.uploaded_file', filename=uploaded) }}" alt="Önizleme">
+        </div>
 
-        <!--predict-->
         <div class="pred" id="pred"></div>
       </section>
     {% endif %}
   </div>
 
   <script>
-    
     const predictUrl = "{{ url_for('ml.predict') }}";
 
-   
     async function runPredict(btn) {
       const el = document.getElementById("pred");
       if (!el) return;
 
       btn.disabled = true;
-      const old = btn.textContent;
-      btn.textContent = "bekle...";
-
+      btn.textContent = "Analiz...";
       el.innerHTML = "";
 
       try {
         const res = await fetch(predictUrl, {
           method: "POST",
-          headers: {"Content-Type":"application/json"},
-          body: JSON.stringify({ topk: 5 })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ threshold: 0.15, temp: 2.0 })
         });
 
         const data = await res.json();
-        if (!data.ok) {
-          el.textContent = "hata: " + (data.error || "bilinmeyen");
-          return;
-        }
+        if (!data.ok) throw new Error(data.error);
 
-        el.innerHTML = data.topk
-          .map(x => `<span class="chip"><em>${x.class}</em><b>${(x.conf*100).toFixed(1)}%</b></span>`)
+        // Büyük başlığı kaldırdık, Mood ismini sadece küçük bir alt bilgi yaptık
+        let html = `<span class="mood-small">Atmosfer: ${data.mood.replace('_', ' ')}</span>`;
+        html += `<div class="vibe-results">`;
+        
+        // Sınıf ve yüzdeleri chip olarak yan yana diziyoruz
+        html += data.vibe_mix
+          .map(x => `
+            <span class="chip">
+              <em>${x.class}</em>
+              <b>%${(x.conf * 100).toFixed(0)}</b>
+            </span>
+          `)
           .join("");
+
+        html += `</div>`;
+        el.innerHTML = html;
+
       } catch (e) {
-        console.error(e);
-        el.textContent = "istek hatası";
+        el.innerHTML = `<div class="alert error">${e.message}</div>`;
       } finally {
         btn.disabled = false;
-        btn.textContent = old;
+        btn.textContent = "Tahmin Et";
       }
     }
   </script>
