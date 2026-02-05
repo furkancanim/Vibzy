@@ -6,7 +6,7 @@
   <title>Vibzy</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
-    /* Sadeleştirilmiş Vibe Tasarımı */
+    /* Gemini Sonuçları İçin Ek Stil */
     .vibe-results {
       margin-top: 15px;
       display: flex;
@@ -14,15 +14,17 @@
       gap: 10px;
       justify-content: center;
     }
-    .mood-small {
-      display: block;
-      width: 100%;
-      text-align: center;
-      font-size: 0.85em;
-      color: #666;
-      margin-bottom: 10px;
-      font-style: italic;
+    .gemini-box {
+      background: #ffffff;
+      padding: 18px;
+      border-radius: 12px;
+      margin-top: 20px;
+      border-left: 5px solid #6200ee;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      color: #333;
+      text-align: left;
     }
+    .gemini-box h4 { margin-top: 0; color: #6200ee; }
   </style>
 </head>
 
@@ -79,8 +81,8 @@
       if (!el) return;
 
       btn.disabled = true;
-      btn.textContent = "Analiz...";
-      el.innerHTML = "";
+      btn.textContent = "Analiz Ediliyor...";
+      el.innerHTML = '<p style="text-align:center; color:#666;">Vibzy müziğini seçiyor...</p>';
 
       try {
         const res = await fetch(predictUrl, {
@@ -92,21 +94,28 @@
         const data = await res.json();
         if (!data.ok) throw new Error(data.error);
 
-        // Büyük başlığı kaldırdık, Mood ismini sadece küçük bir alt bilgi yaptık
-        let html = `<span class="mood-small">Atmosfer: ${data.mood.replace('_', ' ')}</span>`;
-        html += `<div class="vibe-results">`;
-        
-        // Sınıf ve yüzdeleri chip olarak yan yana diziyoruz
-        html += data.vibe_mix
-          .map(x => `
-            <span class="chip">
-              <em>${x.class}</em>
-              <b>%${(x.conf * 100).toFixed(0)}</b>
-            </span>
-          `)
-          .join("");
+        // HTML Çıktısı
+        let html = `
+          <div style="text-align:center; margin-bottom:15px; color:#888; font-size:0.9em;">
+            Atmosfer: ${data.mood}
+          </div>
+          
+          <div class="vibe-results">
+            ${data.vibe_mix.map(x => `
+              <span class="chip">
+                <em>${x.class}</em>
+                <b>%${(x.conf * 100).toFixed(0)}</b>
+              </span>
+            `).join("")}
+          </div>
 
-        html += `</div>`;
+          <div class="gemini-box">
+            <h4>🎵 Öneriler</h4>
+            <div style="font-size:0.95em; line-height:1.6;">
+              ${data.recommendation.replace(/\n/g, "<br>")}
+            </div>
+          </div>
+        `;
         el.innerHTML = html;
 
       } catch (e) {
