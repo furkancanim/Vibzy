@@ -6,7 +6,7 @@
   <title>Vibzy</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
-    /* Gemini Sonuçları İçin Ek Stil */
+    
     .vibe-results {
       margin-top: 15px;
       display: flex;
@@ -81,8 +81,8 @@
       if (!el) return;
 
       btn.disabled = true;
-      btn.textContent = "Analiz Ediliyor...";
-      el.innerHTML = '<p style="text-align:center; color:#666;">Vibzy müziğini seçiyor...</p>';
+      btn.textContent = "Analiz Ediliyor";
+      el.innerHTML = '<p style="text-align:center; color:#666;">Vibzy müziğini seçiyor!</p>';
 
       try {
         const res = await fetch(predictUrl, {
@@ -94,7 +94,7 @@
         const data = await res.json();
         if (!data.ok) throw new Error(data.error);
 
-        // HTML Çıktısı
+        // çıktı
         let html = `
           <div style="text-align:center; margin-bottom:15px; color:#888; font-size:0.9em;">
             Atmosfer: ${data.mood}
@@ -110,7 +110,7 @@
           </div>
 
           <div class="gemini-box">
-            <h4>🎵 Öneriler</h4>
+            <h4>Öneriler</h4>
             <div style="font-size:0.95em; line-height:1.6;">
               ${data.recommendation.replace(/\n/g, "<br>")}
             </div>
@@ -122,7 +122,7 @@
         el.innerHTML = `<div class="alert error">${e.message}</div>`;
       } finally {
         btn.disabled = false;
-        btn.textContent = "Tahmin Et";
+        btn.textContent = "Tahmin et";
       }
     }
   </script>

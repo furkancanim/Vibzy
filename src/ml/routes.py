@@ -1,21 +1,24 @@
-#
+
+
+
 from flask import Blueprint, request, jsonify, current_app, session
+
 from pathlib import Path
 from .gemini_service import GeminiMusicStyler
 
 bp = Blueprint("ml", __name__, url_prefix="/ml")
 
-# geminimusic
+# geminimusic hizlansin diye onceden
 music_styler = GeminiMusicStyler()
 
-# moodlar
+# VIBEMAP
 VIBE_MAP = {
-    ("buildings", "sea"): "Coastal_Metropolis",
-    ("buildings", "street"): "Urban_Jungle",
-    ("forest", "mountain"): "Alpine_Escape",
-    ("sea", "street"): "Coastal_Drive",
-    ("buildings", "forest"): "City_Oasis",
-    ("glacier", "mountain"): "Wilderness_Peak"
+    ("buildings", "sea"): "LoFi_Chill",
+    ("buildings", "street"): "HipHop",
+    ("forest", "mountain"): "Huzurlu",
+    ("sea", "street"): "Akustik_Chill",
+    ("buildings", "forest"): "Soft",
+    ("glacier", "mountain"): "Dark_Ambient"
 }
 
 @bp.post("/predict")
@@ -39,9 +42,9 @@ def predict():
     svc = current_app.classifier
     preds = svc.predict(img_path, topk=6, temperature=temp)
 
-    # 
+    
     active_vibes = [p for p in preds if p.conf >= threshold]
-    # Eğer hiçbiri eşiği geçmezse en yüksek olanı al
+    # eşik geçilmezse
     if not active_vibes: active_vibes = [preds[0]]
 
     # mood map filtrelemesi

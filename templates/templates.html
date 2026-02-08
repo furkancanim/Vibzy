@@ -8,7 +8,7 @@
 <body>
   <div class="container">
     <h1>Fotoğraf Yükleme Dashboard</h1>
-    <p>Şimdilik sadece yükle & önizle. Model/müzik daha sonra eklenecek.</p>
+    
 
     <form class="card" action="/upload" method="post" enctype="multipart/form-data">
       <input type="file" name="image" accept=".jpg,.jpeg,.png,.webp" required />
@@ -30,7 +30,7 @@
     <div class="card">
       <h2>Yüklenenler</h2>
       {% if files|length == 0 %}
-        <p>Henüz dosya yok.</p>
+        <p>Henüz dosya yok</p>
       {% else %}
         <div class="grid">
           {% for f in files %}

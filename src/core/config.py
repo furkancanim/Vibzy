@@ -8,5 +8,5 @@ from typing import Set
 class AppConfig:
     upload_dir: Path
     allowed_ext: Set[str] = field(default_factory=lambda: {"jpg", "jpeg", "png", "webp"})
-    max_content_length: int = 10 * 1024 * 1024  # 10 MB
+    max_content_length: int = 10 * 1024 * 1024  
     secret_key: str = "dev-secret-change-me"

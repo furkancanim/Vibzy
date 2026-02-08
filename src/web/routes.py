@@ -1,4 +1,3 @@
-# web: sadece upload + son yüklenen önizleme + o dosyayı serve et
 from __future__ import annotations
 
 from pathlib import Path
@@ -22,8 +21,8 @@ def _allowed(ext: str) -> bool:
 
 @bp.get("/")
 def index():
-    # not: sadece sessiondaki son dosya
-    uploaded = session.get("last_uploaded")
+
+    uploaded = session.get("last_uploaded") #last uploaded
     return render_template("index.html", uploaded=uploaded)
 
 
@@ -39,18 +38,18 @@ def upload():
         flash("dosya seçmelisin", "error")
         return redirect(url_for("web.index"))
 
-    # not: uzantı kontrolü
+    # uzantikontrolu duzeltme
     orig = safe_name(f.filename)
     ext = get_extension(orig)
     if not _allowed(ext):
         flash("bu dosya türü desteklenmiyor", "error")
         return redirect(url_for("web.index"))
 
-    # not: benzersiz isimle kaydet
+    # uniquefilename
     stored = unique_filename(ext, prefix="u_")
     f.save(_upload_dir() / stored)
 
-    # not: kullanıcıya özel son dosyayı session'da tut
+    # last upload session 
     session["last_uploaded"] = stored
 
     flash("yüklendi", "success")
@@ -59,9 +58,9 @@ def upload():
 
 @bp.get("/uploads/<path:filename>")
 def uploaded_file(filename: str):
-    # not: sadece kullanıcının kendi son yüklediği dosyaya izin ver
     last = session.get("last_uploaded")
-    if not last or filename != last:
+    #IDOR insecure direct object reference
+    if not last or filename != last: 
         abort(404)
 
     return send_from_directory(str(_upload_dir()), filename)

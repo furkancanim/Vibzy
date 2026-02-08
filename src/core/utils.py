@@ -9,7 +9,7 @@ def get_extension(filename: str) -> str:
     return filename.rsplit(".", 1)[1].lower()
 
 def safe_name(filename: str) -> str:
-    # UI/meta için güvenli hale getir
+    
     return secure_filename(filename) or "file"
 
 def unique_filename(ext: str, prefix: str) -> str:

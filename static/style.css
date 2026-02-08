@@ -1,4 +1,4 @@
-/* not: koyu taban + kontrollü sarı/mor vurgu */
+
 :root{
   --bg:#07070c;
   --card:#0d0e17;
@@ -22,7 +22,7 @@ body{
     var(--bg);
 }
 
-/* not: sayfayı gerçekten ortala */
+
 .wrap{
   width: min(920px, 92vw);
   margin: 22px auto 40px;
@@ -30,7 +30,7 @@ body{
   gap: 14px;
 }
 
-/* not: üst bar */
+/* üst bar */
 .top{
   display:flex;
   align-items:center;
@@ -55,7 +55,7 @@ body{
   font-size:18px;
 }
 
-/* not: kart */
+/* kart */
 .card{
   background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.12));
   border: 1px solid var(--border);
@@ -64,7 +64,7 @@ body{
   box-shadow: var(--shadow);
 }
 
-/* not: upload alanı tek satır ve şık */
+/* upload alanı */
 .form{
   display:flex;
   gap:10px;
@@ -85,7 +85,7 @@ body{
 }
 .picker:hover{ border-color: rgba(155,124,255,.55); }
 
-/* not: buton */
+/*buton */
 .btn{
   padding: 11px 14px;
   border-radius: 14px;
@@ -97,7 +97,7 @@ body{
 .btn:hover{ border-color: rgba(255,210,74,.45); }
 .btn:disabled{ opacity:.6; cursor:not-allowed; }
 
-/* not: başlık satırı */
+/* başlık satırı */
 .row{
   display:flex;
   align-items:center;
@@ -110,7 +110,7 @@ body{
   color: var(--muted);
 }
 
-/* not: önizlemeyi ortala ve maksimum genişlik ver */
+/* önizleme ortala */
 .preview{
   display:block;
   width: 100%;
@@ -126,7 +126,7 @@ body{
   display:block;
 }
 
-/* not: tahmin chips ortalı */
+/*tahmin chips ortalı */
 .pred{
   margin-top: 12px;
   display:flex;
@@ -148,7 +148,7 @@ body{
 .chip em{ font-style:normal; color:var(--text); }
 .chip b{ font-weight:800; color:var(--yellow); }
 
-/* not: mesajlar */
+/*mesajlar */
 .alerts{ display:grid; gap:8px; }
 .alert{
   padding: 10px 12px;
