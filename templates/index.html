@@ -1,130 +1,169 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Vibzy</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <style>
-    
-    .vibe-results {
-      margin-top: 15px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-    }
-    .gemini-box {
-      background: #ffffff;
-      padding: 18px;
-      border-radius: 12px;
-      margin-top: 20px;
-      border-left: 5px solid #6200ee;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-      color: #333;
-      text-align: left;
-    }
-    .gemini-box h4 { margin-top: 0; color: #6200ee; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibzy - AI Müzik Küratörü</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Basit CSS eklemeleri (style.css yüklenmezse diye) */
+        body { font-family: 'Segoe UI', sans-serif; background-color: #0f0f13; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { width: 90%; max-width: 600px; background: #181820; padding: 2rem; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h1 { margin-bottom: 1.5rem; font-weight: 300; letter-spacing: 1px; }
+        .upload-area { border: 2px dashed #333; padding: 2rem; text-align: center; border-radius: 12px; cursor: pointer; transition: 0.3s; }
+        .upload-area:hover { border-color: #7b2cbf; background: #1e1e28; }
+        img.preview { max-width: 100%; border-radius: 8px; margin-top: 1rem; display: none; }
+        .btn { background: #7b2cbf; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 1rem; margin-top: 10px; width: 100%; }
+        .btn:disabled { background: #444; cursor: not-allowed; }
+        
+        /* Sonuç Kartı */
+        #result-area { margin-top: 2rem; display: none; animation: fadeIn 0.5s; }
+        .mood-badge { background: #240046; color: #e0aaff; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; display: inline-block; margin-bottom: 1rem; border: 1px solid #7b2cbf; }
+        
+        /* Müzik Kartı (Fizy) */
+        .music-card { display: flex; align-items: center; background: #2a2a35; padding: 15px; border-radius: 12px; border: 1px solid #3c3c4a; margin-top: 15px; }
+        .music-img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; margin-right: 15px; }
+        .music-info { flex: 1; }
+        .music-title { font-size: 1.1rem; font-weight: bold; margin: 0; }
+        .music-artist { color: #aaa; margin: 5px 0 0 0; font-size: 0.9rem; }
+        .fizy-btn { text-decoration: none; background: #ffc107; color: black; padding: 8px 15px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; display: inline-block; margin-top: 8px; }
+        
+        /* İstatistikler */
+        .stats { margin-top: 15px; font-size: 0.85rem; color: #888; }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
 </head>
-
 <body>
-  <div class="wrap">
-    <header class="top">
-      <div class="brand">
-        <div class="mark"></div>
-        <div class="name">vibzy</div>
-      </div>
-    </header>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="alerts">
-          {% for category, msg in messages %}
-            <div class="alert {{ category }}">{{ msg }}</div>
-          {% endfor %}
+<div class="container">
+    <h1>🪐 vibzy</h1>
+
+    <form action="/upload" method="post" enctype="multipart/form-data" id="upload-form">
+        <div class="upload-area" onclick="document.getElementById('file-input').click()">
+            <p>Fotoğrafı buraya sürükle veya seç</p>
+            <input type="file" name="file" id="file-input" hidden onchange="document.getElementById('upload-form').submit()">
         </div>
-      {% endif %}
-    {% endwith %}
-
-    <section class="card">
-      <form class="form" action="{{ url_for('web.upload') }}" method="post" enctype="multipart/form-data">
-        <label class="picker">
-          <input class="file" type="file" name="file" accept="image/*" required>
-          <span>Görsel Seç</span>
-        </label>
-        <button class="btn" type="submit">Yükle</button>
-      </form>
-    </section>
+    </form>
 
     {% if uploaded %}
-      <section class="card">
-        <div class="row">
-          <div class="title">Analiz</div>
-          <button class="btn" type="button" onclick="runPredict(this)">Tahmin Et</button>
-        </div>
-
-        <div class="preview">
-          <img src="{{ url_for('web.uploaded_file', filename=uploaded) }}" alt="Önizleme">
-        </div>
-
-        <div class="pred" id="pred"></div>
-      </section>
+    <div style="text-align: center;">
+        <img src="{{ url_for('web.uploaded_file', filename=uploaded) }}" class="preview" style="display: block;">
+        <button id="predict-btn" class="btn">Analiz Et & Müzik Öner</button>
+    </div>
     {% endif %}
-  </div>
 
-  <script>
-    const predictUrl = "{{ url_for('ml.predict') }}";
+    <div id="loading" style="display:none; text-align: center; margin-top: 20px;">
+        <p>Yapay zeka atmosferi analiz ediyor...</p>
+    </div>
 
-    async function runPredict(btn) {
-      const el = document.getElementById("pred");
-      if (!el) return;
+    <div id="result-area">
+        <div style="text-align: center;">
+            <span class="mood-badge" id="mood-text">Mood Yükleniyor...</span>
+            <h2 id="ai-suggestion" style="margin: 10px 0; font-size: 1.2rem;"></h2>
+        </div>
 
-      btn.disabled = true;
-      btn.textContent = "Analiz Ediliyor";
-      el.innerHTML = '<p style="text-align:center; color:#666;">Vibzy müziğini seçiyor!</p>';
-
-      try {
-        const res = await fetch(predictUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ threshold: 0.15, temp: 2.0 })
-        });
-
-        const data = await res.json();
-        if (!data.ok) throw new Error(data.error);
-
-        // çıktı
-        let html = `
-          <div style="text-align:center; margin-bottom:15px; color:#888; font-size:0.9em;">
-            Atmosfer: ${data.mood}
-          </div>
-          
-          <div class="vibe-results">
-            ${data.vibe_mix.map(x => `
-              <span class="chip">
-                <em>${x.class}</em>
-                <b>%${(x.conf * 100).toFixed(0)}</b>
-              </span>
-            `).join("")}
-          </div>
-
-          <div class="gemini-box">
-            <h4>Öneriler</h4>
-            <div style="font-size:0.95em; line-height:1.6;">
-              ${data.recommendation.replace(/\n/g, "<br>")}
+        <div class="music-card" id="music-card" style="display: none;">
+            <img src="" id="music-img" class="music-img" alt="Album Art">
+            <div class="music-info">
+                <h3 class="music-title" id="music-title">Şarkı</h3>
+                <p class="music-artist" id="music-artist">Sanatçı</p>
+                <a href="#" target="_blank" id="music-link" class="fizy-btn">▶ fizy'de Dinle</a>
             </div>
-          </div>
-        `;
-        el.innerHTML = html;
+        </div>
+        
+        <div id="music-error" style="display: none; color: #ff6b6b; margin-top: 10px; text-align: center;">
+            Müzik bulunamadı ama mood bu!
+        </div>
 
-      } catch (e) {
-        el.innerHTML = `<div class="alert error">${e.message}</div>`;
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Tahmin et";
-      }
+        <div class="stats" id="yolo-stats">
+            </div>
+    </div>
+</div>
+
+<script>
+    const predictBtn = document.getElementById('predict-btn');
+    const resultArea = document.getElementById('result-area');
+    const loading = document.getElementById('loading');
+
+    if (predictBtn) {
+        predictBtn.addEventListener('click', async () => {
+            // 1. Arayüzü hazırla
+            predictBtn.disabled = true;
+            predictBtn.innerText = "Düşünülüyor...";
+            loading.style.display = 'block';
+            resultArea.style.display = 'none';
+
+            try {
+                // 2. Python'a istek at
+                const response = await fetch('/ml/predict', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ threshold: 0.05, temp: 4.0 })
+                });
+
+                const data = await response.json();
+
+                if (!data.ok) {
+                    alert("Hata: " + data.error);
+                    return;
+                }
+
+                // 3. Verileri Yerleştir (Mapping Hatası BURADAYDI, düzelttik)
+                
+                // Mood Başlığı
+                document.getElementById('mood-text').innerText = data.mood;
+                
+                // Gemini Önerisi (Metin)
+                document.getElementById('ai-suggestion').innerText = '"' + data.gemini_text + '"';
+
+                // Müzik Kartı (Fizy)
+                const music = data.music;
+                if (music && music.found) {
+                    document.getElementById('music-card').style.display = 'flex';
+                    document.getElementById('music-error').style.display = 'none';
+                    
+                    document.getElementById('music-img').src = music.image;
+                    document.getElementById('music-title').innerText = music.title;
+                    document.getElementById('music-artist').innerText = music.artist;
+                    document.getElementById('music-link').href = music.link;
+                } else {
+                    document.getElementById('music-card').style.display = 'none';
+                    document.getElementById('music-error').style.display = 'block';
+                }
+
+                // YOLO İstatistikleri (yolo_results ismini kullandık)
+                const statsDiv = document.getElementById('yolo-stats');
+                statsDiv.innerHTML = "<hr style='border-color:#333; margin:10px 0;'>";
+                
+                // İşte o meşhur .map fonksiyonunun doğru kullanımı:
+                if (data.yolo_results && data.yolo_results.length > 0) {
+                    data.yolo_results.forEach(item => {
+                        const percent = Math.round(item.conf * 100);
+                        statsDiv.innerHTML += `
+                            <div class="stat-row">
+                                <span>${item.class}</span>
+                                <span>%${percent}</span>
+                            </div>
+                        `;
+                    });
+                }
+
+                // 4. Sonucu Göster
+                resultArea.style.display = 'block';
+
+            } catch (err) {
+                console.error(err);
+                alert("Bir şeyler ters gitti!");
+            } finally {
+                loading.style.display = 'none';
+                predictBtn.disabled = false;
+                predictBtn.innerText = "Tekrar Analiz Et";
+            }
+        });
     }
-  </script>
+</script>
+
 </body>
 </html>
