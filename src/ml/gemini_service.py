@@ -9,7 +9,7 @@ class GeminiMusicStyler:
         
         if self.api_key:
             try:
-                # Client'ı başlat
+                # client
                 self.client = genai.Client(api_key=self.api_key)
             except Exception as e:
                 print(f"Client Başlatma Hatası: {e}")
@@ -18,11 +18,12 @@ class GeminiMusicStyler:
         if not self.client:
             return "Tarkan - Yolla"
 
-        # Vibe verisini metne dök
+        # vibe -> metin
         vibe_desc = ", ".join([f"%{int(v['conf']*100)} {v['class']}" for v in vibe_data])
         
         prompt = f"""
-        GÖREV: Verilen moda uygun SADECE 1 ADET şarkı öner.
+        GÖREV: Verilen moda uygun SADECE 1 ADET şarkı öner. Gerçekten var olan bir şarkı olmak zorunda. Mood sadece resim hakkında bir fikir vermesi içindir. Şarkıları özgürce seç.
+
         
         Mod: {mood}
         Detaylar: {vibe_desc}
@@ -38,7 +39,7 @@ class GeminiMusicStyler:
         """
         
         try:
-            # En güvenli ve hızlı model: gemini-1.5-flash
+            # model secimi
             response = self.client.models.generate_content(
                 model="gemini-flash-latest",
                 contents=prompt
@@ -50,21 +51,21 @@ class GeminiMusicStyler:
             return "Tarkan - Yolla"
 
     def _clean_response(self, text):
-        """Cevabı temizler ve ekstra boşlukları yok eder"""
+        
         if not text: return "Tarkan - Yolla"
         
-        # 1. İlk satırı al
+        # ilk satırı al
         first_line = text.strip().split('\n')[0]
         
-        # 2. İşaretleri temizle
+        # isaretlerin temizligi bosluk duzltme
+
         clean = first_line.replace('*', '').replace('"', '').replace("'", "")
         clean = re.sub(r'^\d+\.\s*', '', clean)
         
-        # 3. Tireyi boşluğa çevir
+       
         clean = clean.replace('-', ' ')
 
-        # 🔥 KRİTİK NOKTA: Çift/Üçlü boşlukları TEK boşluğa indir
-        # "Enya   Orinoco" -> "Enya Orinoco" olur.
+        # bosluk azaltma
         clean = re.sub(r'\s+', ' ', clean)
         
         return clean.strip()

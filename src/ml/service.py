@@ -7,6 +7,9 @@ from typing import List
 
 import numpy as np
 from ultralytics import YOLO
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("fizy")
 
 
 @dataclass

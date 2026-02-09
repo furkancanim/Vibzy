@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vibzy - AI Müzik Küratörü</title>
+    <title>Vibzy - Görselden Müzik Öneri Sistemi</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        /* Basit CSS eklemeleri (style.css yüklenmezse diye) */
+        /* css */
         body { font-family: 'Segoe UI', sans-serif; background-color: #0f0f13; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
         .container { width: 90%; max-width: 600px; background: #181820; padding: 2rem; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         h1 { margin-bottom: 1.5rem; font-weight: 300; letter-spacing: 1px; }
@@ -16,11 +16,11 @@
         .btn { background: #7b2cbf; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 1rem; margin-top: 10px; width: 100%; }
         .btn:disabled { background: #444; cursor: not-allowed; }
         
-        /* Sonuç Kartı */
+        /* sonuç kartı */
         #result-area { margin-top: 2rem; display: none; animation: fadeIn 0.5s; }
         .mood-badge { background: #240046; color: #e0aaff; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; display: inline-block; margin-bottom: 1rem; border: 1px solid #7b2cbf; }
         
-        /* Müzik Kartı (Fizy) */
+        /* fizy kartı */
         .music-card { display: flex; align-items: center; background: #2a2a35; padding: 15px; border-radius: 12px; border: 1px solid #3c3c4a; margin-top: 15px; }
         .music-img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; margin-right: 15px; }
         .music-info { flex: 1; }
@@ -28,7 +28,7 @@
         .music-artist { color: #aaa; margin: 5px 0 0 0; font-size: 0.9rem; }
         .fizy-btn { text-decoration: none; background: #ffc107; color: black; padding: 8px 15px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; display: inline-block; margin-top: 8px; }
         
-        /* İstatistikler */
+        /* istatistik */
         .stats { margin-top: 15px; font-size: 0.85rem; color: #888; }
         .stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
         
@@ -38,7 +38,7 @@
 <body>
 
 <div class="container">
-    <h1>🪐 vibzy</h1>
+    <h1>vibzy</h1>
 
     <form action="/upload" method="post" enctype="multipart/form-data" id="upload-form">
         <div class="upload-area" onclick="document.getElementById('file-input').click()">
@@ -89,14 +89,14 @@
 
     if (predictBtn) {
         predictBtn.addEventListener('click', async () => {
-            // 1. Arayüzü hazırla
+            // arayüz
             predictBtn.disabled = true;
-            predictBtn.innerText = "Düşünülüyor...";
+            predictBtn.innerText = "düşünülüyor";
             loading.style.display = 'block';
             resultArea.style.display = 'none';
 
             try {
-                // 2. Python'a istek at
+                // python isteği
                 const response = await fetch('/ml/predict', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -110,15 +110,15 @@
                     return;
                 }
 
-                // 3. Verileri Yerleştir (Mapping Hatası BURADAYDI, düzelttik)
+                // verilerin kartları
                 
-                // Mood Başlığı
+                // mood başlığı
                 document.getElementById('mood-text').innerText = data.mood;
                 
-                // Gemini Önerisi (Metin)
+                // gemini sonucu
                 document.getElementById('ai-suggestion').innerText = '"' + data.gemini_text + '"';
 
-                // Müzik Kartı (Fizy)
+                // fizy muzik kartları
                 const music = data.music;
                 if (music && music.found) {
                     document.getElementById('music-card').style.display = 'flex';
@@ -133,11 +133,11 @@
                     document.getElementById('music-error').style.display = 'block';
                 }
 
-                // YOLO İstatistikleri (yolo_results ismini kullandık)
+                // yolostat
                 const statsDiv = document.getElementById('yolo-stats');
                 statsDiv.innerHTML = "<hr style='border-color:#333; margin:10px 0;'>";
                 
-                // İşte o meşhur .map fonksiyonunun doğru kullanımı:
+                // map 
                 if (data.yolo_results && data.yolo_results.length > 0) {
                     data.yolo_results.forEach(item => {
                         const percent = Math.round(item.conf * 100);
@@ -150,12 +150,12 @@
                     });
                 }
 
-                // 4. Sonucu Göster
+                // sonuç
                 resultArea.style.display = 'block';
 
             } catch (err) {
                 console.error(err);
-                alert("Bir şeyler ters gitti!");
+                alert("hata");
             } finally {
                 loading.style.display = 'none';
                 predictBtn.disabled = false;
